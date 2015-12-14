@@ -1,3 +1,3 @@
-CFLAGS += -Wall -lethrate -g
+CFLAGS += -Wall -g
 
 main: main.o ../lib.a

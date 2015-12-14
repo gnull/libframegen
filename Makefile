@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-CFLAGS += -Wall -lethrate -g
+CFLAGS += -Wall -g
 
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
