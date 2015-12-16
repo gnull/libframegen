@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <time.h>
+
 #include "master.h"
 #include "export.h"
 #include "ipc.h"
@@ -128,8 +130,7 @@ static void recv_pkt()
 	struct udphdr udp;
 	struct payload payload;
 	struct sockaddr_ll addr;
-	struct timespec *ts;
-	struct cmsghdr *i;
+	struct timespec ts;
 	char cmsg[1000];
 
 	struct iovec iov[] = {
@@ -166,6 +167,11 @@ again:
 		perror("recvmsg");
 		exit(1);
 	}
+	err = clock_gettime(CLOCK_REALTIME, &ts);
+	if (err == -1) {
+		perror("clock_gettime");
+		exit(1);
+	}
 
 	if (addr.sll_pkttype == PACKET_OUTGOING)
 		goto again;
@@ -179,15 +185,8 @@ again:
 	if (payload.flowid != flowid)
 		goto again;
 
-	ts = NULL;
-	for_cmsg (i, msg) {
-		if (i->cmsg_level == SOL_SOCKET &&
-		    i->cmsg_type == SCM_TIMESTAMPING)
-			ts = (struct timespec *)CMSG_DATA(i);
-	}
-
 	ENTER_CS;
-	fl_push(&stat, payload.seq, ts);
+	fl_push(&stat, payload.seq, &ts);
 	LEAVE_CS;
 }
 
