@@ -50,6 +50,9 @@ void fl_sort(struct flist_head *head);
 /* Compute latency by given rx/tx stats */
 double fl_latency(struct flist_head *rx, struct flist_head *tx);
 
+/* Receive new items from fd and append them to sorted list */
+int fl_recv_append(int fd, struct flist_head *head);
+
 /* Free memory used by the list */
 void fl_free(struct flist_head *head);
 

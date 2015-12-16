@@ -144,9 +144,6 @@ void fl_merge(struct flist_head *left, struct flist_head *right,
 	result->first = entry.next;
 	result->last = i;
 	result->size = left->size + right->size;
-
-	fl_clear(left);
-	fl_clear(right);
 }
 
 struct flist_entry *fl_ind(struct flist_entry *pos, int ind)
@@ -192,7 +189,7 @@ void fl_sort(struct flist_head *head)
 }
 
 /* return ts1 - ts2 */
-double ts_sub(struct timespec *ts1, struct timespec *ts2)
+static double ts_sub(struct timespec *ts1, struct timespec *ts2)
 {
 	double res = (double)(ts1->tv_sec - ts2->tv_sec) +
 		(double)1e-9 * (ts1->tv_nsec - ts2->tv_nsec);
@@ -229,3 +226,17 @@ double fl_latency(struct flist_head *rx, struct flist_head *tx)
 	return lat;
 }
 
+int fl_recv_append(int fd, struct flist_head *head)
+{
+	int err;
+	struct flist_head tmp;
+
+	err = fl_recv(fd, &tmp);
+	if (err)
+		return err;
+
+	fl_sort(&tmp);
+	fl_merge(&tmp, head, head);
+
+	return 0;
+}
