@@ -68,7 +68,6 @@ static int rx_start()
 		INFO("rx returned %d\n", err);
 		exit(err);
 	} else if (rx_pid > 0) {
-		INFO("rx_started at pid %d", rx_pid);
 		close(slave_end);
 		return 0;
 	} else {
