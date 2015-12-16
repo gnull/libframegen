@@ -106,7 +106,7 @@ int fl_recv(int fd, struct flist_head *head)
 	fl_iovec(head, iov);
 
 	err = readv(fd, iov, size);
-	if (err)
+	if (err == -1)
 		return perror("readv"), 1;
 
 	return 0;
