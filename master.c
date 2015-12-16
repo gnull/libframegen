@@ -9,7 +9,7 @@
 
 #include "master.h"
 #include "ipc.h"
-
+#include "util.h"
 
 static header_cfg_t header;
 static ethrate_t rate;
@@ -19,10 +19,12 @@ static unsigned int fsize,
 static int tx_pid, rx_pid,
 	tx_pipe, rx_pipe;
 
-static uint32_t rx_cnt, tx_cnt;
+static struct flist_head rx_stat, tx_stat;
 
 
-/* TX control functions */
+/*
+ * Start functions
+ */
 
 static int tx_start()
 {
@@ -49,57 +51,6 @@ static int tx_start()
 	}
 }
 
-static int tx_stop()
-{
-	int err;
-	siginfo_t info;
-
-	err = kill(tx_pid, SIGSLAVE_STOP);
-	if (err)
-		return perror("kill"), 1;
-
-	err = read(tx_pipe, &tx_cnt, sizeof(tx_cnt));
-	if (err == -1)
-		return perror("read"), 1;
-
-	INFO("read %d bytes", err);
-	INFO("waiting for tx to terminate");
-
-	err = waitid(P_PID, tx_pid, &info, WEXITED);
-	if (err)
-		return perror("waitid"), 1;
-	INFO("tx terminated with status %d", info.si_status);
-
-	return 0;
-}
-
-static int tx_get_stat(uint32_t *tx)
-{
-	int err;
-
-	err = kill(tx_pid, SIGSLAVE_STAT);
-	if (err) {
-		if (errno == ESRCH)
-			goto out;
-		perror("kill");
-		return 1;
-	}
-
-	err = read(tx_pipe, &tx_cnt, sizeof(tx_cnt));
-	if (err == -1)
-		return perror("read"), 1;
-	INFO("read %d bytes", err);
-out:
-	*tx = tx_cnt;
-	return 0;
-}
-
-
-
-/*
- * RX control functions
- */
-
 static int rx_start()
 {
 	int err;
@@ -117,6 +68,7 @@ static int rx_start()
 		INFO("rx returned %d\n", err);
 		exit(err);
 	} else if (rx_pid > 0) {
+		INFO("rx_started at pid %d", rx_pid);
 		close(slave_end);
 		return 0;
 	} else {
@@ -125,48 +77,92 @@ static int rx_start()
 	}
 }
 
-static int rx_stop()
+/*
+ * Stop functions
+ */
+
+static int slave_stop(int fd, int pid, struct flist_head *head)
 {
 	int err;
 	siginfo_t info;
 
-	err = kill(rx_pid, SIGSLAVE_STOP);
+	err = kill(pid, SIGSLAVE_STOP);
 	if (err)
 		return perror("kill"), 1;
 
-	err = read(rx_pipe, &rx_cnt, sizeof(rx_cnt));
-	if (err == -1)
-		return perror("read"), 1;
+	err = fl_recv_append(fd, head);
+	if (err)
+		ERR("failed to fl_recv_append");
 
-	INFO("read %d bytes", err);
-	INFO("waiting for rx to terminate");
+	INFO("waiting for %d to terminate", pid);
 
-	err = waitid(P_PID, rx_pid, &info, WEXITED);
+	err = waitid(P_PID, pid, &info, WEXITED);
 	if (err)
 		return perror("waitid"), 1;
-	INFO("rx terminated with status %d", info.si_status);
+	INFO("%d terminated with status %d", pid, info.si_status);
 
 	return 0;
 }
+
+static int tx_stop()
+{
+	return slave_stop(tx_pipe, tx_pid, &tx_stat);
+}
+
+
+static int rx_stop()
+{
+	return slave_stop(rx_pipe, rx_pid, &rx_stat);
+}
+
+/*
+ * Statistics functions
+ */
+
+static int slave_stat(int fd, int pid, struct flist_head *head)
+{
+	int err;
+
+	err = kill(pid, SIGSLAVE_STAT);
+	if (err) {
+		if (errno == ESRCH)
+			return 0;
+		perror("kill");
+		return 1;
+	}
+
+	err = fl_recv_append(fd, head);
+	if (err)
+		ERR("fl_recv_append failed to get tx_stat");
+	return err;
+}
+
+static int tx_get_stat(uint32_t *tx)
+{
+	int err;
+
+	err = slave_stat(tx_pipe, tx_pid, &tx_stat);
+	if (err)
+		return err;
+
+	if (tx)
+		*tx = tx_stat.size;
+	return 0;
+}
+
 
 static int rx_get_stat(uint32_t *rx, double *lat)
 {
 	int err;
 
-	err = kill(rx_pid, SIGSLAVE_STAT);
-	if (err) {
-		if (errno == ESRCH)
-			goto out;
-		perror("kill");
-		return 1;
-	}
+	err = slave_stat(rx_pipe, rx_pid, &rx_stat);
+	if (err)
+		return err;
 
-	err = read(rx_pipe, &rx_cnt, sizeof(rx_cnt));
-	if (err == -1)
-		return perror("read"), 1;
-	INFO("read %d bytes", err);
-out:
-	*rx = rx_cnt;
+	if (rx)
+		*rx = rx_stat.size;
+	if (lat)
+		*lat = fl_latency(&rx_stat, &tx_stat);
 	return 0;
 }
 

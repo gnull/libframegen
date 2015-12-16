@@ -19,6 +19,18 @@ int main()
 	};
 
 	header_cfg_t header = {
+		.eth = {
+			.h_dest = {0x60, 0xd8, 0x19, 0x6b, 0x01, 0xc5},
+			.h_source = {0x60, 0xd8, 0x19, 0x6b, 0x01, 0xc6},
+			.h_proto = htons(ETH_P_IP)
+		},
+		.ip = {
+			.saddr = htonl(192 << 24 | 168 << 16 | 1 << 8 | 123),
+			.daddr = htonl(192 << 24 | 168 << 16 | 1 << 8 | 132),
+			.ttl = 123,
+			.id = 1,
+			.check = 0
+		}
 	};
 
 	handler.tx.conf_flowid(0);
@@ -38,11 +50,14 @@ int main()
 		return 1;
 	}
 
-	for (i = 0; i < 20; ++i) {
+	for (i = 0; i < 10; ++i) {
 		uint32_t tx, rx;
+		double lat;
 		int err;
 
 		sleep(1);
+
+		INFO("getting tx stats");
 
 		err = handler.tx.get_stat(&tx);
 		if (err) {
@@ -50,13 +65,15 @@ int main()
 			return 1;
 		}
 
-		err = handler.rx.get_stat(&rx, NULL);
+		INFO("getting rx stats");
+
+		err = handler.rx.get_stat(&rx, &lat);
 		if (err) {
 			ERR("can't get rx stats");
 			return 1;
 		}
 
-		INFO("\tStatistics (tx/rx): %u/%u", tx, rx);
+		INFO("\tStatistics (tx/rx/lat): %u / %u / %f", tx, rx, lat);
 	}
 
 	if (handler.tx.stop()) {

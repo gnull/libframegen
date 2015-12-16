@@ -13,10 +13,12 @@
 #include "master.h"
 #include "export.h"
 #include "ipc.h"
+#include "util.h"
 
 static int master_pipe;
 static unsigned int flowid;
-static uint32_t pktnum;
+
+static struct flist_head stat;
 
 /*
  * Socket initialization
@@ -105,11 +107,13 @@ void handle(int signum)
 {
 	int err;
 
-	err = write(master_pipe, &pktnum, sizeof(pktnum));
-	if (err == -1) {
-		perror("write");
+	err = fl_send(&stat, master_pipe);
+	if (err) {
+		ERR("failed to send stat");
 		exit(1);
 	}
+
+	fl_free(&stat);
 
 	if (signum == SIGSLAVE_STOP)
 		exit(0);
@@ -124,6 +128,8 @@ static void recv_pkt()
 	struct udphdr udp;
 	struct payload payload;
 	struct sockaddr_ll addr;
+	struct timespec *ts;
+	struct cmsghdr *i;
 	char cmsg[1000];
 
 	struct iovec iov[] = {
@@ -173,8 +179,15 @@ again:
 	if (payload.flowid != flowid)
 		goto again;
 
+	ts = NULL;
+	for_cmsg (i, msg) {
+		if (i->cmsg_level == SOL_SOCKET &&
+		    i->cmsg_type == SCM_TIMESTAMPING)
+			ts = (struct timespec *)CMSG_DATA(i);
+	}
+
 	ENTER_CS;
-	pktnum++;
+	fl_push(&stat, payload.seq, ts);
 	LEAVE_CS;
 }
 
@@ -182,7 +195,7 @@ int rx(unsigned int fid, int out)
 {
 	master_pipe = out;
 	flowid = fid;
-	pktnum = 0;
+	fl_clear(&stat);
 
 	setup_sock();
 	setup_signals();

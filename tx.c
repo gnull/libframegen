@@ -10,15 +10,20 @@
 
 #include <linux/net_tstamp.h>
 
+#include <time.h>
+
 #include "export.h"
 #include "master.h"
 #include "ipc.h"
+#include "util.h"
 
 //#define ENABLE_TX_SCHED
 
 static int master_pipe;
 static unsigned int flowid, fsize;
 static uint32_t pktnum;
+
+static struct flist_head stat;
 
 /*
  * Frame/Socket initialization
@@ -184,6 +189,7 @@ static void setup_timer(ethrate_t *rate)
 static void send_frame(int sugnum)
 {
 	int err;
+	struct timespec ts;
 
 	payload->seq = pktnum;
 	err = sendmsg(sockfd, &msg, 0);
@@ -191,22 +197,20 @@ static void send_frame(int sugnum)
 		perror("sendmsg");
 		exit(1);
 	}
+	err = clock_gettime(CLOCK_REALTIME, &ts);
+	if (err == -1) {
+		perror("clock_gettime");
+		exit(1);
+	}
 
+	fl_push(&stat, pktnum, &ts);
 	++pktnum;
 }
 
 static void send_stats(int signum)
 {
-	INFO("sending stats");
-	int err;
-
-	err = write(master_pipe, &pktnum, sizeof(pktnum));
-	if (err == -1) {
-		perror("write");
-		exit(1);
-	}
-
-	INFO("sent %d bytes", err);
+	fl_send(&stat, master_pipe);
+	fl_free(&stat);
 }
 
 static void stop(int signum)
@@ -227,6 +231,7 @@ int tx(header_cfg_t *header, ethrate_t rate,
 	flowid = fid;
 	fsize = fsz;
 	pktnum = 0;
+	fl_clear(&stat);
 
 	setup_sock();
 	setup_frame(header);
