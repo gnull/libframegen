@@ -157,9 +157,10 @@ struct flist_entry *fl_ind(struct flist_entry *pos, int ind)
 
 void fl_sort(struct flist_head *head)
 {
-	if (head->size == 1)
+	if (head->size == 1 ||
+	    head->size == 0)
 		return;
-	assert(head->size);
+	assert(head->size > 0);
 	int left_size, right_size;
 	struct flist_entry *left_end, *right_begin;
 
