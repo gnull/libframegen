@@ -192,14 +192,14 @@ static void send_frame(int sugnum)
 	struct timespec ts;
 
 	payload->seq = pktnum;
-	err = sendmsg(sockfd, &msg, 0);
-	if (err == -1) {
-		perror("sendmsg");
-		exit(1);
-	}
 	err = clock_gettime(CLOCK_REALTIME, &ts);
 	if (err == -1) {
 		perror("clock_gettime");
+		exit(1);
+	}
+	err = sendmsg(sockfd, &msg, 0);
+	if (err == -1) {
+		perror("sendmsg");
 		exit(1);
 	}
 
