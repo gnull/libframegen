@@ -112,6 +112,56 @@ int fl_recv(int fd, struct flist_head *head)
 	return 0;
 }
 
+/* remove item following entry */
+static void fl_rm(struct flist_entry *entry)
+{
+	struct flist_entry *next;
+
+	if (!entry->next)
+		return;
+
+	next = entry->next;
+	entry->next = entry->next->next;
+	free(next);
+}
+
+static int ts_cmp(const struct timespec *ts1,
+		  const struct timespec *ts2)
+{
+	return (ts1->tv_sec - ts2->tv_sec)?:(ts1->tv_nsec - ts2->tv_nsec);
+}
+
+void fl_uniq(struct flist_head *head)
+{
+	struct flist_entry *i, *prev;
+	struct flist_entry dummy;
+
+	if (!head->size)
+		return;
+
+	dummy.next = head->first;
+	prev = &dummy;
+	i = prev->next;
+
+	while (i && i->next) {
+		struct flist_entry *next;
+
+		next = i->next;
+		if (i->fdata.id == next->fdata.id) {
+			int cmp = ts_cmp(&i->fdata.ts, &next->fdata.ts);
+			if (cmp > 0) {
+				i = i->next;
+				fl_rm(prev);
+			} else {
+				fl_rm(i);
+			}
+		} else {
+			prev = i;
+			i = i->next;
+		}
+	}
+}
+
 void fl_merge(struct flist_head *left, struct flist_head *right,
 	      struct flist_head *result)
 {

@@ -131,6 +131,7 @@ static int slave_stat(int fd, int pid, struct flist_head *head)
 	}
 
 	err = fl_recv_append(fd, head);
+	fl_uniq(head);
 	if (err)
 		ERR("fl_recv_append failed to get tx_stat");
 	return err;

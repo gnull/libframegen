@@ -47,6 +47,9 @@ void fl_merge(struct flist_head *left, struct flist_head *right,
 /* Sort list */
 void fl_sort(struct flist_head *head);
 
+/* Remove duplicates id's from the list */
+void fl_uniq(struct flist_head *head);
+
 /* Compute latency by given rx/tx stats */
 double fl_latency(struct flist_head *rx, struct flist_head *tx);
 
