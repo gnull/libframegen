@@ -125,6 +125,7 @@ void handle(int signum)
 static void recv_pkt()
 {
 	int err;
+	int len;
 	struct ethhdr eth;
 	struct iphdr ip;
 	struct udphdr udp;
@@ -161,9 +162,9 @@ static void recv_pkt()
 again:
 
 	ENTER_CS;
-	err = recvmsg(sockfd, &msg, 0);
+	len = recvmsg(sockfd, &msg, 0);
 	LEAVE_CS;
-	if (err == -1) {
+	if (len == -1) {
 		perror("recvmsg");
 		exit(1);
 	}
@@ -176,7 +177,7 @@ again:
 	if (addr.sll_pkttype == PACKET_OUTGOING)
 		goto again;
 
-	if (err < HEADERS_LEN + sizeof(payload))
+	if (len < HEADERS_LEN + sizeof(payload))
 		goto again;
 
 	if (payload.magic != MAGIC)
