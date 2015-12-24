@@ -23,6 +23,7 @@ void fl_alloc(struct flist_head *head, int size)
 	next = NULL;
 	for (i = 0; i < size; ++i) {
 		first = malloc(sizeof(*first));
+		assert(first);
 		if (!i)
 			head->last = first;
 		first->next = next;
@@ -47,6 +48,7 @@ void fl_push(struct flist_head *head, uint32_t id,
 	     const struct timespec *ts)
 {
 	struct flist_entry *new = malloc(sizeof(struct flist_entry));
+	assert(new);
 	new->fdata.id = id;
 	new->fdata.ts = *ts;
 	new->next = NULL;
@@ -74,20 +76,34 @@ void fl_iovec(struct flist_head *head, struct iovec *iov)
 	}
 }
 
+static inline int min(int a, int b)
+{
+	return (a > b) ? b : a;
+}
+
 int fl_send(struct flist_head *head, int fd)
 {
 	int err;
 	int iovlen = head->size + 1;
 	struct iovec iov[iovlen];
+	int i;
 
 	iov->iov_base = &head->size;
 	iov->iov_len  = sizeof(head->size);
 
 	fl_iovec(head, iov + 1);
 
-	err = writev(fd, iov, iovlen);
-	if (err == -1)
-		return perror("writev"), 1;
+	for (i = 0; i < iovlen; i += IOV_MAX) {
+		struct iovec *data_to_write;
+		int len_to_write;
+
+		data_to_write = iov + i;
+		len_to_write = min(IOV_MAX, iovlen - i);
+
+		err = writev(fd, data_to_write, len_to_write);
+		if (err == -1)
+			return perror("writev"), 1;
+	}
 
 	return 0;
 }
@@ -95,6 +111,7 @@ int fl_send(struct flist_head *head, int fd)
 int fl_recv(int fd, struct flist_head *head)
 {
 	int err;
+	int i;
 
 	int size;
 	err = read(fd, &size, sizeof(size));
@@ -105,9 +122,17 @@ int fl_recv(int fd, struct flist_head *head)
 	fl_alloc(head, size);
 	fl_iovec(head, iov);
 
-	err = readv(fd, iov, size);
-	if (err == -1)
-		return perror("readv"), 1;
+	for (i = 0; i < size; i += IOV_MAX) {
+		struct iovec *data_to_read;
+		int len_to_read;
+
+		data_to_read = iov + i;
+		len_to_read  = min(IOV_MAX, size - i);
+
+		err = readv(fd, data_to_read, len_to_read);
+		if (err == -1)
+			return perror("readv"), 1;
+	}
 
 	return 0;
 }

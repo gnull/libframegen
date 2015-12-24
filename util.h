@@ -1,3 +1,7 @@
+/* Without this limits.h do not define IOV_MAX */
+#define __USE_XOPEN
+#include <limits.h>
+
 /*
  * The data, that will be
  * stored in lists/arrays
