@@ -20,6 +20,10 @@ void fl_alloc(struct flist_head *head, int size)
 	struct flist_entry *next, *first;
 	int i;
 
+	fl_clear(head);
+	if (!size)
+		return;
+
 	next = NULL;
 	for (i = 0; i < size; ++i) {
 		first = malloc(sizeof(*first));
