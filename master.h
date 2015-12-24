@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <librfc2544/rfc2544.h>
 
-#define PRNT(level, str, ...) fprintf(stderr, "[" level "] " __FILE__ ": "  str "\n", ##__VA_ARGS__)
-
-#define INFO(...) PRNT("INFO", ##__VA_ARGS__)
-#define  ERR(...) PRNT(" ERR", ##__VA_ARGS__)
+#include "debug.h"
 
 #define for_cmsg(i, msg) for ((i) = CMSG_FIRSTHDR(&(msg));		\
 			      (i); (i) = CMSG_NXTHDR(&(msg), (i)))

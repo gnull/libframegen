@@ -19,6 +19,8 @@ static unsigned int fsize,
 static int tx_pid, rx_pid,
 	tx_pipe, rx_pipe;
 
+char *whoami = "master";
+
 static struct flist_head rx_stat, tx_stat;
 
 
@@ -39,6 +41,7 @@ static int tx_start()
 	tx_pid = fork();
 	if (tx_pid == 0) {
 		close(tx_pipe);
+		whoami = "tx";
 		err = tx(&header, rate, fsize, tx_flowid, slave_end);
 		INFO("tx returned %d\n", err);
 		exit(err);
@@ -64,6 +67,7 @@ static int rx_start()
 	rx_pid = fork();
 	if (rx_pid == 0) {
 		close(rx_pipe);
+		whoami = "rx";
 		err = rx(rx_flowid, slave_end);
 		INFO("rx returned %d\n", err);
 		exit(err);
