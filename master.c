@@ -234,6 +234,6 @@ int init_ctrl_handler(rfc2544_ctrl_handler_t *handler, void *context)
 	return 0;
 }
 
-void deinit_ctrl_hanler()
+void deinit_ctrl_handler()
 {
 }
