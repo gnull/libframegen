@@ -113,6 +113,8 @@ int fl_recv(int fd, struct flist_head *head)
 	int err;
 	int i;
 
+	fl_clear(head);
+
 	int size;
 	err = read(fd, &size, sizeof(size));
 	if (err == -1)
