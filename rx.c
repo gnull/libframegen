@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <time.h>
 
@@ -161,10 +162,10 @@ static void recv_pkt()
 
 again:
 
-	ENTER_CS;
 	len = recvmsg(sockfd, &msg, 0);
-	LEAVE_CS;
 	if (len == -1) {
+		if (errno == EINTR)
+			goto again;
 		perror("recvmsg");
 		exit(1);
 	}
