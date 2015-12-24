@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <stdint.h>
+
 #include <unistd.h>
 
 #include "../util.h"
@@ -49,7 +51,10 @@ void child(int fd)
 	print_list("sort(tx2)", &head2);
 
 	fl_merge(&head, &head2, &head);
-	print_list("tx_merged:", &head);
+	print_list("tx_merged", &head);
+
+	fl_uniq(&head);
+	print_list("tx_uniq", &head);
 }
 
 void parent(int fd)
