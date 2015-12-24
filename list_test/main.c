@@ -5,8 +5,14 @@
 
 #include <unistd.h>
 
+#include <libframegen.h>
+
 #include "../util.h"
 #include "../master.h"
+
+/* To  */
+char *rx_ifname = "";
+char *tx_ifname = "";
 
 void print_list(char *str, struct flist_head *head)
 {

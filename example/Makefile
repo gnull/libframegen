@@ -1,3 +1,8 @@
-CFLAGS += -Wall -g
+ifdef PREFIX
+CFLAGS += -I$(PREFIX)/include -L$(PREFIX)/lib
+endif
 
-main: main.o ../lib.a
+CFLAGS += -Wall -g -lframegen -lrfc2544 -lethrate -ldbg
+
+main: main.o
+	$(CC) $(CFLAGS) -o $@ $^
