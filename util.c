@@ -85,6 +85,39 @@ static inline int min(int a, int b)
 	return (a > b) ? b : a;
 }
 
+int process_all(typeof(readv) func,
+		 int fd, struct iovec *iov, int len)
+{
+	int err, bytes_read;
+	err = func(fd, iov, len);
+	if (err == -1)
+		return err;
+
+	if (err == len)
+		return err;
+
+	bytes_read = err;
+
+	while (err > 0) {
+		assert(len);
+		if (err >= iov->iov_len) {
+			err -= iov->iov_len;
+			iov++;
+			len--;
+		} else {
+			iov->iov_len -= err;
+			iov->iov_base += err;
+		}
+	}
+
+	err = process_all(func, fd, iov, len);
+	if (err == -1)
+		return err;
+
+	return err + bytes_read;
+}
+
+
 int fl_send(struct flist_head *head, int fd)
 {
 	int err;
@@ -104,7 +137,7 @@ int fl_send(struct flist_head *head, int fd)
 		data_to_write = iov + i;
 		len_to_write = min(IOV_MAX, iovlen - i);
 
-		err = writev(fd, data_to_write, len_to_write);
+		err = process_all(writev, fd, data_to_write, len_to_write);
 		if (err == -1)
 			return perror("writev"), 1;
 	}
@@ -135,7 +168,7 @@ int fl_recv(int fd, struct flist_head *head)
 		data_to_read = iov + i;
 		len_to_read  = min(IOV_MAX, size - i);
 
-		err = readv(fd, data_to_read, len_to_read);
+		err = process_all(readv, fd, data_to_read, len_to_read);
 		if (err == -1)
 			return perror("readv"), 1;
 	}
