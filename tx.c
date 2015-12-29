@@ -238,7 +238,8 @@ int tx(header_cfg_t *header, ethrate_t rate,
 	setup_signals();
 	setup_timer(&rate);
 
-	for(;;);
+	for(;;)
+		pause();
 
 	return 0;
 }
