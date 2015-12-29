@@ -33,6 +33,8 @@ static int tx_start()
 	int err;
 	int fd[2], slave_end;
 
+	fl_free(&tx_stat);
+
 	pipe(fd);
 
 	tx_pipe = fd[0];
@@ -58,6 +60,8 @@ static int rx_start()
 {
 	int err;
 	int fd[2], slave_end;
+
+	fl_free(&rx_stat);
 
 	pipe(fd);
 
