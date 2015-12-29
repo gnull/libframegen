@@ -42,8 +42,11 @@ void fl_free(struct flist_head *head)
 {
 	struct flist_entry *i;
 
-	for_list (i, head)
+	while (head->first) {
+		i = head->first;
+		head->first = i->next;
 		free(i);
+	}
 
 	fl_clear(head);
 }
