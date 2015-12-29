@@ -104,6 +104,10 @@ static int slave_stop(int fd, int pid, struct flist_head *head)
 		return perror("waitid"), 1;
 	INFO("%d terminated with status %d", pid, info.si_status);
 
+	err = close(fd);
+	if (err == -1)
+		return perror("close"), 1;
+
 	return 0;
 }
 
