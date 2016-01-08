@@ -38,14 +38,11 @@ int parse_ethrate(ethrate_t *rate)
 	int err;
 	int i;
 
-	err = fscanf(conf_file, "%lf", &rate->val);
-	if (err == 0)
-		return ERR("can't get rate->val"), 1;
-	else if (err == EOF)
+	err = fscanf(conf_file, "%lf/%19s", &rate->val, units);
+	if (err == EOF)
 		return ERR("unexpected EOF"), 1;
-
-	if (get_token(units, sizeof(units)))
-		return ERR("unexpected EOF"), 1;
+	else if (err != 2)
+		return ERR("can't get ethrate"), 1;
 
 	int found = 0;
 
