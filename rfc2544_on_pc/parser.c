@@ -268,6 +268,23 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 		parse_rate(state, arg, &frl->stop_rate);
 		break;
 
+		/* Back-to-back */
+	case opt_btb_enabled:
+		parse_switch(state, arg, &btb->enabled);
+		break;
+	case opt_btb_duration:
+		parse_uint(state, arg, &btb->duration);
+		break;
+	case opt_btb_trials:
+		parse_uint(state, arg, &btb->trials);
+		break;
+	case opt_btb_source:
+		parse_source(state, arg, &btb->rate_source);
+		break;
+	case opt_btb_rates:
+		parse_rates(state, arg, btb->rates, MAX_FRAMES);
+		break;
+
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -317,6 +334,13 @@ static struct argp_option options[] = {
 	{.name = "frl-steps", .key = opt_frl_steps, .arg = "uint"},
 	{.name = "frl-start", .key = opt_frl_start, .arg = "rate"},
 	{.name = "frl-stop", .key = opt_frl_stop, .arg = "rate"},
+
+	{.doc = "Back-to-back options"},
+	{.name = "btb", .key = opt_btb_enabled, .arg = "on/off"},
+	{.name = "btb-duration", .key = opt_btb_duration, .arg = "uint"},
+	{.name = "btb-trials", .key = opt_btb_trials, .arg = "uint"},
+	{.name = "btb-source", .key = opt_btb_source, .arg = "source"},
+	{.name = "btb-rates", .key = opt_btb_rates, .arg = "rates"},
 
 	{}
 };
