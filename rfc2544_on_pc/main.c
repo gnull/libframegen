@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <librfc2544/rfc2544.h>
-
 #include "main.h"
 
 static int update_cb(enum rfc2544_test test,
@@ -22,11 +20,7 @@ int main(int argc, char **argv)
 	rfc2544_settings_t settings = {};
 	int err;
 
-	err = parse_argv(argv + 1, &settings.hdr);
-	if (err)
-		return err;
-
-	err = parse_conf(&settings);
+	err = parse_argv(argc, argv, &settings);
 	if (err)
 		return err;
 
@@ -40,4 +34,5 @@ int main(int argc, char **argv)
 		printf("error!\n");
 	else
 		printf("success!\n");
+	return 0;
 }
