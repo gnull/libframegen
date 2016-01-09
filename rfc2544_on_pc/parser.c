@@ -120,9 +120,15 @@ void parse_switch(struct argp_state *state, char *arg, unsigned int *uint)
 		argp_error(state, "expected on/off, got: %s", arg);
 }
 
-void parse_source(struct argp_state *state, char *arg, ...)
+void parse_source(struct argp_state *state, char *arg,
+		  enum test_rate_source *src)
 {
-
+	if (!strcmp(arg, "thr"))
+		*src = RATE_THROUGHPUT;
+	else if (!strcmp(arg, "manual"))
+		*src = RATE_MANUAL;
+	else
+		argp_error(state, "invalid rate source: %s", arg);
 }
 
 enum rfc2544_options {
@@ -228,6 +234,23 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 		parse_uint(state, arg, &thr->threshold);
 		break;
 
+		/* Latency */
+	case opt_lat_enabled:
+		parse_switch(state, arg, &lat->enabled);
+		break;
+	case opt_lat_duration:
+		parse_uint(state, arg, &lat->duration);
+		break;
+	case opt_lat_trials:
+		parse_uint(state, arg, &lat->trials);
+		break;
+	case opt_lat_source:
+		parse_source(state, arg, &lat->rate_source);
+		break;
+	case opt_lat_rates:
+		parse_rates(state, arg, lat->rates, MAX_FRAMES);
+		break;
+
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -263,6 +286,13 @@ static struct argp_option options[] = {
 	{.name = "thr-duration", .key = opt_thr_duration, .arg = "uint"},
 	{.name = "thr-precision", .key = opt_thr_precision, .arg = "rate"},
 	{.name = "thr-threshold", .key = opt_thr_threshold, .arg = "uint"},
+
+	{.doc = "Latency options"},
+	{.name = "lat", .key = opt_lat_enabled, .arg = "on/off"},
+	{.name = "lat-duration", .key = opt_lat_duration, .arg = "uint"},
+	{.name = "lat-trials", .key = opt_lat_trials, .arg = "uint"},
+	{.name = "lat-source", .key = opt_lat_source, .arg = "source"},
+	{.name = "lat-rates", .key = opt_lat_rates, .arg = "rates"},
 
 	{}
 };
