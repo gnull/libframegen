@@ -161,9 +161,9 @@ enum rfc2544_options {
 	/* Frameloss options */
 	opt_frl_enabled,
 	opt_frl_duration,
-	opt_frl_trials,
-	opt_frl_source,
-	opt_frl_rates,
+	opt_frl_steps,
+	opt_frl_start,
+	opt_frl_stop,
 
 	/* Back-to-back options */
 	opt_btb_enabled,
@@ -251,6 +251,23 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 		parse_rates(state, arg, lat->rates, MAX_FRAMES);
 		break;
 
+		/* Frameloss */
+	case opt_frl_enabled:
+		parse_switch(state, arg, &frl->enabled);
+		break;
+	case opt_frl_duration:
+		parse_uint(state, arg, &frl->duration);
+		break;
+	case opt_frl_steps:
+		parse_uint(state, arg, &frl->steps);
+		break;
+	case opt_frl_start:
+		parse_rate(state, arg, &frl->start_rate);
+		break;
+	case opt_frl_stop:
+		parse_rate(state, arg, &frl->stop_rate);
+		break;
+
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -293,6 +310,13 @@ static struct argp_option options[] = {
 	{.name = "lat-trials", .key = opt_lat_trials, .arg = "uint"},
 	{.name = "lat-source", .key = opt_lat_source, .arg = "source"},
 	{.name = "lat-rates", .key = opt_lat_rates, .arg = "rates"},
+
+	{.doc = "Frameloss options"},
+	{.name = "frl", .key = opt_frl_enabled, .arg = "on/off"},
+	{.name = "frl-duration", .key = opt_frl_duration, .arg = "uint"},
+	{.name = "frl-steps", .key = opt_frl_steps, .arg = "uint"},
+	{.name = "frl-start", .key = opt_frl_start, .arg = "rate"},
+	{.name = "frl-stop", .key = opt_frl_stop, .arg = "rate"},
 
 	{}
 };
