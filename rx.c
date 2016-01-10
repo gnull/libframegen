@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <time.h>
 
@@ -17,6 +18,10 @@
 #include "export.h"
 #include "ipc.h"
 #include "util.h"
+
+struct scm_timestamping {
+	struct timespec ts[3];
+};
 
 static int master_pipe;
 static unsigned int flowid;
@@ -139,6 +144,7 @@ static void recv_pkt()
 	struct payload payload;
 	struct sockaddr_ll addr;
 	struct timespec ts;
+	struct cmsghdr *i;
 	char cmsg[1000];
 
 	struct iovec iov[] = {
@@ -193,8 +199,27 @@ again:
 	if (payload.flowid != flowid)
 		goto again;
 
+	struct scm_timestamping *tss = 0;
+	struct timespec *soft, *hard, *result;
+
+	for_cmsg(i, &msg)
+		if (i->cmsg_level == SOL_SOCKET &&
+		    i->cmsg_type == SCM_TIMESTAMPING)
+			tss = (struct scm_timestamping *) CMSG_DATA(i);
+
+	assert(tss);
+	soft = tss->ts;
+	hard = tss->ts + 2;
+
+	if (!ts_empty(hard))
+		result = hard;
+	else if (!ts_empty(soft))
+		result = soft;
+	else
+		result = &ts;
+
 	ENTER_CS;
-	fl_push(&stat, payload.seq, &ts);
+	fl_push(&stat, payload.seq, result);
 	LEAVE_CS;
 }
 
