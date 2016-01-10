@@ -58,6 +58,35 @@ void parse_uint(struct argp_state *state, char *arg, unsigned int *uint)
 		argp_error(state, "invalid uint: %s", arg);
 }
 
+void parse_frames(struct argp_state *state, char *arg,
+		  unsigned int frames[MAX_FRAMES],
+		  unsigned int frames_en[MAX_FRAMES])
+{
+	const int n = MAX_FRAMES;
+
+	int i;
+	char buff[strlen(arg) + 1];
+
+	strcpy(buff, arg);
+
+	char *token;
+	token = strtok(buff, ",");
+
+	if (!token)
+		argp_error(state, "empty frames list: %s", arg);
+
+	for (i = 0; i < n; ++i) {
+		if (!token)
+			return;
+		parse_uint(state, token, frames + i);
+		frames_en[i] = 1;
+		token = strtok(NULL, ",");
+	}
+
+	if (token)
+		argp_error(state, "frames list length exceeds %d", n);
+}
+
 int str_to_rate_units(struct argp_state *state, char *str)
 {
 	int i;
@@ -171,6 +200,9 @@ enum rfc2544_options {
 	opt_btb_trials,
 	opt_btb_source,
 	opt_btb_rates,
+
+	/* Frame size option */
+	opt_frames,
 };
 
 static error_t parser(int key, char *arg, struct argp_state *state)
@@ -285,6 +317,11 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 		parse_rates(state, arg, btb->rates, MAX_FRAMES);
 		break;
 
+		/* Frame sizes */
+	case opt_frames:
+		parse_frames(state, arg, settings->frames,
+			     settings->frames_en);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -341,6 +378,10 @@ static struct argp_option options[] = {
 	{.name = "btb-trials", .key = opt_btb_trials, .arg = "uint"},
 	{.name = "btb-source", .key = opt_btb_source, .arg = "source"},
 	{.name = "btb-rates", .key = opt_btb_rates, .arg = "rates"},
+
+	{.doc = "Other options"},
+	{.name = "frames", .key = opt_frames, .arg = "uints",
+	 .doc = "Comma-separated list frame sizes"},
 
 	{}
 };
