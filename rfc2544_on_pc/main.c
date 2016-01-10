@@ -60,13 +60,55 @@ void pprint_lat(lat_data_t *lat,
 void pprint_frl(frl_data_t *frl,
 		unsigned frames[MAX_FRAMES], unsigned frames_nr)
 {
-	
+	int i, j;
+	double rate;
+
+	printf("status:\n");
+	for (i = 0; i < frames_nr; ++i)
+		printf("%u\t%s\n", frames[i],
+		       status_name[frl->status[i]]);
+
+	printf("result:\n");
+	rate = frl->start_rate;
+	for (i = 0; i < frl->cnt; ++i) {
+		printf("\t%fMBPS", rate);
+		rate += frl->step_rate;
+	}
+
+	printf("\n");
+
+	for (i = 0; i < frames_nr; ++i) {
+		printf("%u:\t");
+		for (j = 0; j < frl->cnt; ++j)
+			printf("%f\t", frl->v[i][j]);
+		printf("\n");
+	}
+
+	printf("statistics:\n");
+	for (i = 0; i < frames_nr; ++i) {
+		printf("%u:\t");
+		for (j = 0; j < frl->cnt; ++j) {
+			pprint_stat(&frl->trial_stat[i][j]);
+			printf("\t");
+		}
+		printf("\n");
+	}
 }
 
 void pprint_btb(btb_data_t *btb,
 		unsigned frames[MAX_FRAMES], unsigned frames_nr)
 {
+	int i;
+	printf("# framesize\t" "result\t"
+	       "rate\t" "trial_stat\t" "status\n");
 
+	for (i = 0; i < frames_nr; ++i) {
+		printf("%u\t" "%f\t" "%f\t",
+		       frames[i], btb->res[i], btb->rate[i]);
+
+		pprint_stat(btb->trial_stat + i);
+		printf("\t%s\n", status_name[btb->status[i]]);
+	}
 }
 
 static void pprint_test(rfc2544_data_t *data,
@@ -167,6 +209,9 @@ static int update_cb(enum rfc2544_test test,
 {
 	static int last_test = -1;
 	unsigned frames_nr = *(unsigned *)context;
+
+	/* Костыль, ибо librfc косячит */
+	data->frl.cnt = data->set.frl.steps;
 
 	fprintf(stderr, "\r%50s\r", "");
 
