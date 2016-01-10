@@ -89,6 +89,12 @@ static void setup_frame(header_cfg_t *header)
 	addr.sll_family = AF_PACKET;
 	addr.sll_ifindex = if_nametoindex(tx_ifname);
 
+	if (!addr.sll_ifindex) {
+		perror("if_nametoindex");
+		ERR("can't get rx interface index");
+		exit(1);
+	}
+
 	msg.msg_name = &addr;
 	msg.msg_namelen = sizeof(addr);
 	msg.msg_iov = iov;

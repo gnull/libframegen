@@ -45,6 +45,12 @@ static void setup_sock()
 		.sll_protocol = htons(ETH_P_ALL),
 	};
 
+	if (!addr.sll_ifindex) {
+		perror("if_nametoindex");
+		ERR("can't get rx interface index");
+		exit(1);
+	}
+
 	err = bind(sockfd, (struct sockaddr *) &addr, sizeof(addr));
 	if (err) {
 		perror("bind");
