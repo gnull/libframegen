@@ -160,6 +160,8 @@ int fl_recv(int fd, struct flist_head *head)
 	if (err == -1)
 		return perror("read"), 1;
 
+	assert(err == sizeof(size));
+
 	struct iovec iov[size];
 	fl_alloc(head, size);
 	fl_iovec(head, iov);
