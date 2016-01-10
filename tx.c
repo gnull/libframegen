@@ -126,6 +126,11 @@ static void set_handler(int signum, void (*handler)(int))
 	}
 }
 
+
+#define ENTER_CS mask(&signals)
+/* The code here will not be interrupted by master */
+#define LEAVE_CS umask(&signals)
+
 static void setup_signals()
 {
 	sigemptyset(&signals);
@@ -224,6 +229,63 @@ static void stop(int signum)
 	INFO("stopping");
 	send_stats(signum);
 	exit(0);
+}
+
+void tx_tstamp()
+{
+	char control[200];
+	struct cmsghdr *i;
+	char data[HEADERS_LEN + sizeof(struct payload)];
+
+	struct payload *payload = (struct payload *)(data + HEADERS_LEN);
+
+	struct iovec iov = {
+		.iov_base = data,
+		.iov_len = sizeof(data)
+	};
+
+	struct msghdr msg = {
+		.msg_control = control,
+		.msg_controllen = sizeof(control),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+
+	int err;
+
+	err = recvmsg(sockfd, &msg, MSG_ERRQUEUE);
+	if (err == -1) {
+		perror("recvmsg");
+		ERR("can't recvmsg(ERRQUEUE)");
+	}
+
+	struct scm_timestamping *tss = 0;
+	struct timespec *soft, *hard, *result;
+
+	for_cmsg(i, &msg)
+		if (i->cmsg_level == SOL_SOCKET &&
+		    i->cmsg_type == SCM_TIMESTAMPING)
+			tss = (struct scm_timestamping *) CMSG_DATA(i);
+
+	if (!tss)
+		return;
+
+	soft = tss->ts;
+	hard = tss->ts + 2;
+
+	if (!ts_empty(hard))
+		result = hard;
+	else if (!ts_empty(soft))
+		result = soft;
+	else
+		return;
+
+	if (!result)
+		return;
+
+	ENTER_CS;
+	fl_push(&stat, payload->seq, result);
+	LEAVE_CS;
 }
 
 /*

@@ -19,10 +19,6 @@
 #include "ipc.h"
 #include "util.h"
 
-struct scm_timestamping {
-	struct timespec ts[3];
-};
-
 static int master_pipe;
 static unsigned int flowid;
 

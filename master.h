@@ -20,6 +20,10 @@ struct payload {
 
 #define MAGIC 0xdeadbeef
 
+struct scm_timestamping {
+	struct timespec ts[3];
+};
+
 int tx(header_cfg_t *header, ethrate_t ethrate,
        unsigned int fsize, unsigned int flowid, int out);
 
