@@ -228,7 +228,7 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 		break;
 	case opt_txif:
 		tx_ifname = malloc(strlen(arg) + 1);
-		strcpy(rx_ifname, arg);
+		strcpy(tx_ifname, arg);
 		break;
 	case opt_smac:
 		parse_mac(state, arg, hdr->eth.h_source);
