@@ -12,5 +12,5 @@ $(target): *.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 test: $(target)
-	cat default.conf | xargs ./$(target)
+	sudo ./rfc2544-default.sh
 
