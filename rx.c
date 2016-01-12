@@ -80,10 +80,6 @@ static void handle(int signum);
 
 static sigset_t signals;
 
-#define ENTER_CS mask(&signals)
-/* The code here will not be interrupted by master */
-#define LEAVE_CS umask(&signals)
-
 static void setup_signals()
 {
 	int err;
@@ -214,9 +210,9 @@ again:
 	else
 		result = &ts;
 
-	ENTER_CS;
+	mask(&signals);
 	fl_push(&stat, payload.seq, result);
-	LEAVE_CS;
+	umask(&signals);
 }
 
 int rx(unsigned int fid, int out)

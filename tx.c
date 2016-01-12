@@ -156,10 +156,6 @@ static void set_handler(int signum, void (*handler)(int))
 }
 
 
-#define ENTER_CS mask(&signals)
-/* The code here will not be interrupted by master */
-#define LEAVE_CS umask(&signals)
-
 static void setup_signals()
 {
 	sigemptyset(&signals);
@@ -313,9 +309,9 @@ void tx_tstamp()
 	if (!result)
 		return;
 
-	ENTER_CS;
+	mask(&signals);
 	fl_push(&stat, payload->seq, result);
-	LEAVE_CS;
+	umask(&signals);
 }
 
 /*
