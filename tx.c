@@ -1,5 +1,6 @@
 #include <sys/time.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <sys/socket.h>
 #include <netpacket/packet.h>
@@ -66,6 +67,26 @@ static struct sockaddr_ll addr;
 static struct msghdr msg;
 struct payload *payload;
 
+void ip_checksum(struct iphdr *ip)
+{
+	assert(sizeof(*ip) % 2 == 0);
+
+	register uint32_t sum = 0;
+	uint16_t *octets = (uint16_t *)ip;
+	int octets_nr = sizeof(*ip) / 2;
+	int i;
+
+	ip->check = 0;
+
+	for (i = 0; i < octets_nr; ++i)
+		sum += octets[i];
+
+	while (sum>>16)
+		sum = (sum & 0xffff) + (sum >> 16);
+
+	ip->check = ~sum;
+}
+
 static void setup_frame(header_cfg_t *header)
 {
 	int payload_len = fsize - HEADERS_LEN;
@@ -75,6 +96,8 @@ static void setup_frame(header_cfg_t *header)
 
 	header->ip.tot_len = htons(ip_len);
 	header->udp.len = htons(udp_len);
+
+	ip_checksum(&header->ip);
 
 	iov[0].iov_base = &header->eth;
 	iov[0].iov_len  = sizeof(header->eth);
