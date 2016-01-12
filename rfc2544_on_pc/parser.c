@@ -332,8 +332,10 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 static struct argp_option options[] = {
 	{.doc = "Interface options"},
 	{.name = "rx-if", .key = opt_rxif, .arg = "interface",
+	 .flags = OPTION_NO_USAGE,
 	 .doc = "RX interface"},
 	{.name = "tx-if", .key = opt_txif, .arg = "interface",
+	 .flags = OPTION_NO_USAGE,
 	 .doc = "TX interface"},
 
 	{.doc = "Header options"},
@@ -351,8 +353,7 @@ static struct argp_option options[] = {
 	 .doc = "Destination port"},
 
 	{.doc = "Throughput options"},
-	{.name = "thr", .key = opt_thr_enabled, .arg="on/off",
-	 .doc = "Turn on/off throughtput"},
+	{.name = "thr", .key = opt_thr_enabled, .arg="on/off"},
 	{.name = "thr-maxrate", .key = opt_thr_maxrate, .arg = "rate"},
 	{.name = "thr-duration", .key = opt_thr_duration, .arg = "uint"},
 	{.name = "thr-precision", .key = opt_thr_precision, .arg = "rate"},
@@ -386,9 +387,22 @@ static struct argp_option options[] = {
 	{}
 };
 
+static char docstring[] =
+	"\nRun rfc2544 tests described by OPTIONS."
+	"The interface specified by --rx-if is used for reception of frames. "
+	"The one specified by --tx-if is used for transmission.\n\n"
+	"Option argument may be of the following types:\n"
+	"  uint - unsigned int\n"
+	"  source - rate source('thr' or 'manual')\n"
+	"  rate - 'xGBPS', 'xMBPS', 'xKBPS' or 'x%', where x is uint\n"
+	"  rates - comma-separated list of rates(without spaces)"
+	"";
+
 static struct argp argp = {
 	.options = options,
 	.parser = parser,
+	.args_doc = "--rx-if=interface --tx-if=interface",
+	.doc = docstring,
 };
 
 int parse_argv(int argc, char **argv, rfc2544_settings_t *settings)
