@@ -70,6 +70,12 @@ static void setup_frame(header_cfg_t *header)
 {
 	int payload_len = fsize - HEADERS_LEN;
 
+	int udp_len = sizeof(header->udp) + payload_len;
+	int ip_len  = sizeof(header->ip) + udp_len;
+
+	header->ip.tot_len = htons(ip_len);
+	header->udp.len = htons(udp_len);
+
 	iov[0].iov_base = &header->eth;
 	iov[0].iov_len  = sizeof(header->eth);
 
@@ -203,6 +209,7 @@ static void send_frame(int sugnum)
 	struct timespec ts;
 
 	payload->seq = pktnum;
+
 	err = clock_gettime(CLOCK_REALTIME, &ts);
 	if (err == -1) {
 		perror("clock_gettime");
