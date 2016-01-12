@@ -245,7 +245,19 @@ static unsigned int sum(unsigned int *ar, int n)
 
 int main(int argc, char **argv)
 {
-	rfc2544_settings_t settings = {};
+	rfc2544_settings_t settings = {
+		.hdr = {
+			.eth = { .h_proto = htons(ETH_P_IP) },
+			.ip  = {
+				.version = 4,
+				.ihl = 5,
+				.ttl = 64,
+				.protocol = 0x11, /* UDP */
+			},
+			.udp = {
+			}
+		}
+	};
 	int err;
 
 	err = parse_argv(argc, argv, &settings);
