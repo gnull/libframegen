@@ -281,6 +281,8 @@ void tx_tstamp()
 
 	err = recvmsg(sockfd, &msg, MSG_ERRQUEUE);
 	if (err == -1) {
+		if (errno == EAGAIN)
+			return;
 		perror("recvmsg");
 		ERR("can't recvmsg(ERRQUEUE)");
 	}
@@ -333,7 +335,7 @@ int tx(header_cfg_t *header, ethrate_t rate,
 	setup_timer(&rate);
 
 	for(;;)
-		pause();
+		tx_tstamp();
 
 	return 0;
 }
