@@ -1,6 +1,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <sys/socket.h>
 #include <netpacket/packet.h>
