@@ -78,7 +78,7 @@ void pprint_frl(frl_data_t *frl,
 	printf("\n");
 
 	for (i = 0; i < frames_nr; ++i) {
-		printf("%u:\t");
+		printf("%u:\t", frames[i]);
 		for (j = 0; j < frl->cnt; ++j)
 			printf("%f\t", frl->v[i][j]);
 		printf("\n");
@@ -86,7 +86,7 @@ void pprint_frl(frl_data_t *frl,
 
 	printf("statistics:\n");
 	for (i = 0; i < frames_nr; ++i) {
-		printf("%u:\t");
+		printf("%u:\t", frames[i]);
 		for (j = 0; j < frl->cnt; ++j) {
 			pprint_stat(&frl->trial_stat[i][j]);
 			printf("\t");
